@@ -141,6 +141,8 @@ def main():
         if os.path.isdir(folder_path):
             print(f"Calibrating camera for {folder}...")
             ret, mtx, dist = calibrate_camera_from_images(folder_path, args.square_size, args.chessboard_width, args.chessboard_height, args.show_corners)
+            if "dslr" not in folder.lower():
+                dist = np.zeros(dist.shape, dtype=dist.dtype)
             intrinsics_file = os.path.join(intrinsics_dir, f'{folder}_intrinsics.json')
             save_calibration_to_json(mtx, dist, intrinsics_file)
             print(f"Calibration data saved for {folder}.")

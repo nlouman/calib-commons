@@ -4,6 +4,7 @@ import numpy as np
 from typing import Dict
 from enum import Enum
 from tqdm import tqdm
+import re
 
 from calib_commons.data.load_calib import load_intrinsics
 # from calib_board.core.observationCheckerboard import ObservationCheckerboard
@@ -35,6 +36,14 @@ def detect_board_corners(images_parent_folder: str,
     else:
         raise ValueError("board_type must be either 'chessboard' or 'charuco'")
     return correspondences_array
+
+def numeric_prefix(filename):
+    # Attempt to parse out a leading integer
+    match = re.match(r'^(\d+)', filename)
+    if match:
+        return int(match.group(1))
+    else:
+        return 0  # or raise an error if strictly required
         
 
 def detect_chessboards(images_parent_folder: str, 
@@ -60,15 +69,17 @@ def detect_chessboards(images_parent_folder: str,
     for cam, image_folder in tqdm(image_folders.items(), desc=f"Processing cameras", total=len(image_folders), leave=False): 
         correspondences[cam] = {}
         if save_images_with_overlayed_detected_corners: 
-            if not os.path.exists(image_folder + "\\extracted_corners"):
-                os.makedirs(image_folder + "\\extracted_corners")
+            corners_folder = os.path.join(image_folder, "extracted_corners")
+            if not os.path.exists(corners_folder):
+                os.makedirs(corners_folder)
                 
         if undistort:
-            camera_matrix, distortion_coeffs, _ = load_intrinsics(intrinsics_paths[cam])
+            # camera_matrix, distortion_coeffs, _ = load_intrinsics(intrinsics_paths[cam])
+            camera_matrix, distortion_coeffs = load_intrinsics(intrinsics_paths[cam])
 
         files = os.listdir(image_folder)
         files = [f for f in files if f.endswith(('.png', '.jpg', '.jpeg'))]
-        files.sort(key=lambda x: int(x.split('_')[0]))
+        files.sort(key=numeric_prefix)
         
         for filename in tqdm(files, desc=f"Processing camera {cam}", total=len(files), leave=False):        
             k = int(filename.split('.')[0])
@@ -108,7 +119,7 @@ def detect_chessboards(images_parent_folder: str,
                     cv.waitKey(1)
 
                     if save_images_with_overlayed_detected_corners:
-                        file_path_save = image_folder + "\\extracted_corners" + "\\" + filename
+                        file_path_save = os.path.join(corners_folder, filename)
                         cv.imwrite(file_path_save, img)
 
                 if undistort:
@@ -144,9 +155,10 @@ def detect_charuco(images_parent_folder: str,
     # for cam, image_folder in image_folders.items():
         correspondences[cam] = {}
         if save_images_with_overlayed_detected_corners: 
-            if not os.path.exists(image_folder + "\\extracted_corners"):
-                os.makedirs(image_folder + "\\extracted_corners")
-                
+            corners_folder = os.path.join(image_folder, "extracted_corners")
+            if not os.path.exists(corners_folder):
+                os.makedirs(corners_folder)
+
         if undistort:
             camera_matrix, distortion_coeffs = load_intrinsics(intrinsics_paths[cam])
 
@@ -180,7 +192,7 @@ def detect_charuco(images_parent_folder: str,
                     cv.waitKey(1)
                 
                     if save_images_with_overlayed_detected_corners:
-                        file_path_save = image_folder + "\\extracted_corners" + "\\" + filename
+                        file_path_save = os.path.join(corners_folder, filename)
                         cv.imwrite(file_path_save, img)
 
             if charuco_corners is not None:

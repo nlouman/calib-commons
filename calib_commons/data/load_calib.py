@@ -39,7 +39,7 @@ def construct_camera_intrinsics(images_folder: str,
                          intrinsics_path: str) -> Intrinsics:
 
     # Find all images in the folder
-    image_files = [f for f in os.listdir(images_folder) if f.endswith(('.png', '.jpg', '.jpeg'))]
+    image_files = [f for f in os.listdir(images_folder) if f.endswith(('.png', '.jpg', '.jpeg', '.JPG'))]
     image_files.sort(key=lambda x: int(os.path.splitext(x)[0]))
 
     # Take the image with the smallest number

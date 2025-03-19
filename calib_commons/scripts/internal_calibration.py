@@ -87,7 +87,12 @@ def calibrate_camera_from_images(images_path, square_size, col, row, show_corner
 
     print(f"Detected chessboard patterns in {len(objpoints)} out of {len(files)} images.")
 
-    ret, mtx, dist, _, _ = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+    if "dslr" not in images_path.lower() and "kinect" not in images_path.lower() and "d405" not in images_path.lower():
+        flags = (cv2.CALIB_FIX_K1 | cv2.CALIB_FIX_K2 | cv2.CALIB_FIX_K3 | cv2.CALIB_ZERO_TANGENT_DIST)
+        ret, mtx, _, _, _, = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None, flags=flags)
+        dist = np.zeros((1, 5))
+    else:
+        ret, mtx, dist, _, _ = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
     print(f"Camera calibrated with reprojection error (RMSE): {ret:.2f} [pix]")
 
     return ret, mtx, dist
@@ -141,8 +146,6 @@ def main():
         if os.path.isdir(folder_path):
             print(f"Calibrating camera for {folder}...")
             ret, mtx, dist = calibrate_camera_from_images(folder_path, args.square_size, args.chessboard_width, args.chessboard_height, args.show_corners)
-            if "dslr" not in folder.lower():
-                dist = np.zeros(dist.shape, dtype=dist.dtype)
             intrinsics_file = os.path.join(intrinsics_dir, f'{folder}_intrinsics.json')
             save_calibration_to_json(mtx, dist, intrinsics_file)
             print(f"Calibration data saved for {folder}.")

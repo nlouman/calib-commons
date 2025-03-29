@@ -113,12 +113,25 @@ def main():
     data_directory = args.data_directory or os.getcwd()
     output_parent_directory = args.output_parent_directory or data_directory
 
-    output_subfolder_name = "calibrate_intrinsics_output"
+    # output_subfolder_name = "calibrate_intrinsics_output"
 
-    output_directory = os.path.join(output_parent_directory, output_subfolder_name)
+    output_directory = output_parent_directory # os.path.join(output_parent_directory, output_subfolder_name)
     os.makedirs(output_directory, exist_ok=True)
 
-    intrinsics_dir = os.path.join(output_directory, "camera_intrinsics")
+    # If folder is not empty, move the existing files to a backup folder   
+    existing_files = [f for f in os.listdir(output_directory) if os.path.isfile(os.path.join(output_directory, f))]
+    if existing_files:
+        backup_folders = [folder for folder in os.listdir(output_directory) if folder.startswith("backup_") and os.path.isdir(os.path.join(output_directory, folder))]
+        backup_folders.sort()
+        if backup_folders:
+            last_backup = int(backup_folders[-1].split("_")[1])
+            new_backup_folder = os.path.join(output_directory, f"backup_{last_backup + 1:03d}")
+        else:
+            new_backup_folder = os.path.join(output_directory, "backup_000")
+        os.makedirs(new_backup_folder, exist_ok=True)
+        for file in existing_files:
+            os.rename(os.path.join(output_directory, file), os.path.join(new_backup_folder, file))
+    intrinsics_dir = output_directory
     os.makedirs(intrinsics_dir, exist_ok=True)
 
     if args.use_videos:
@@ -140,10 +153,10 @@ def main():
         images_directory = data_directory
 
     for folder in os.listdir(images_directory):
-        if folder == output_subfolder_name:
-            continue
+        # if folder == output_subfolder_name:
+        #     continue
         folder_path = os.path.join(images_directory, folder)
-        if os.path.isdir(folder_path):
+        if os.path.isdir(folder_path) and not 'info' in folder:
             print(f"Calibrating camera for {folder}...")
             ret, mtx, dist = calibrate_camera_from_images(folder_path, args.square_size, args.chessboard_width, args.chessboard_height, args.show_corners)
             intrinsics_file = os.path.join(intrinsics_dir, f'{folder}_intrinsics.json')

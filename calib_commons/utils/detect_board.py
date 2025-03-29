@@ -55,7 +55,7 @@ def detect_chessboards(images_parent_folder: str,
                        save_images_with_overlayed_detected_corners: bool = True) -> Dict[str, Dict[int, np.array]]:
     
     # camera_names = list({image_file.stem.split('_')[0] for ext in ["*.jpg", "*.png", "*.jpeg"] for image_file in images_parent_folder.glob(ext)})
-    image_folders = {cam: os.path.join(images_parent_folder, cam) for cam in os.listdir(images_parent_folder) if os.path.isdir(os.path.join(images_parent_folder, cam))}
+    image_folders = {cam: os.path.join(images_parent_folder, cam) for cam in os.listdir(images_parent_folder) if os.path.isdir(os.path.join(images_parent_folder, cam)) and not 'info' in cam}
 
     intrinsics_paths = {cam: os.path.join(intrinsics_folder, cam + "_intrinsics.json") for cam in image_folders}
 

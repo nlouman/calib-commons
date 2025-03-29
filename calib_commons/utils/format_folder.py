@@ -58,7 +58,7 @@ def sort_and_rename_images(folder_path, overwrite=False):
     return new_folder_path
 
 if __name__ == "__main__":
-    folder = sort_and_rename_images('/home/fred/dev/orx/orx_middleware/ros2_ws/src/kuka_camera/src/user_applications/calibration_captures/calibration_019/dslr', overwrite=False)
+    folder = sort_and_rename_images('/home/fred/dev/orx/data/experiment_data/calibration/images/calibration_024/dslr', overwrite=False)
     print("Renamed images are in:", folder)
 
 # Example usage:

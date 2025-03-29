@@ -25,3 +25,4 @@ classifiers = [
 
 [project.scripts]
 calibrate-intrinsics = "calib_commons.scripts.internal_calibration:main"
+center-to-dslr = "calib_commons.scripts.center_to_dslr:main"

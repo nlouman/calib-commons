@@ -24,11 +24,16 @@ def load_intrinsics(filename):
 def construct_cameras_intrinsics(images_parent_folder, 
                          intrinsics_folder) -> Intrinsics:
     
-    image_folders = {cam: os.path.join(images_parent_folder, cam) for cam in os.listdir(images_parent_folder) if os.path.isdir(os.path.join(images_parent_folder, cam))}
+    # Customization: Ignore the 'info' folders
+    image_folders = {cam: os.path.join(images_parent_folder, cam) for cam in os.listdir(images_parent_folder) if (os.path.isdir(os.path.join(images_parent_folder, cam)))}
     intrinsics_paths = {cam: os.path.join(intrinsics_folder, cam + "_intrinsics.json") for cam in image_folders}
 
     intrinsics = {}
     for cam in image_folders:
+        print(f"Constructing intrinsics for camera {cam}")
+        if 'info' in cam.lower():
+            print(f"Skipping camera {cam}")
+            continue
         intrinsics[cam] = construct_camera_intrinsics(image_folders[cam], intrinsics_paths[cam])
     
     return intrinsics

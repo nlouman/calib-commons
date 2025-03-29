@@ -12,6 +12,7 @@ setup(
             # 'name-of-command = package.module:function'
             "calibrate-intrinsics = calib_commons.scripts.internal_calibration:main",
             "calib-eval = calib_commons.scripts.run_eval_calib:main",
+            "center-dslr = calib_commons.scripts.center_to_dslr:main",
         ],
     },
 )

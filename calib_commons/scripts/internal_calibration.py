@@ -62,23 +62,34 @@ def calibrate_camera_from_images(images_path, square_size, col, row, show_corner
         file_path = os.path.join(images_path, filename)
         img = cv2.imread(file_path)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        # gray = cv2.equalizeHist(gray) # ADDED FOR SONY INTERNAL CALIBRATION
 
-        ret, corners = cv2.findChessboardCorners(gray, (col, row))
+        # ret, corners = cv2.findChessboardCorners(gray, (col, row), flags=cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_NORMALIZE_IMAGE + cv2.CALIB_CB_FAST_CHECK)
+        # if ret == 0:
+            # print(f"Chessboard corners not found in {filename}. Trying with findChessboardCornersSB...")
+        ret, corners = cv2.findChessboardCornersSB(gray, (col, row))
         if ret:
-            corners2 = np.squeeze(cv2.cornerSubPix(gray, corners, (corner_sub_pix_win_size, corner_sub_pix_win_size), (-1, -1), criteria))
+            # corners2 = np.squeeze(cv2.cornerSubPix(gray, corners, (corner_sub_pix_win_size, corner_sub_pix_win_size), (-1, -1), criteria))
             objpoints.append(objp)
-            imgpoints.append(corners2)
+            imgpoints.append(corners)
 
             if show_corners:
-                img = cv2.drawChessboardCorners(img, (col, row), corners2, ret)
+                img = cv2.drawChessboardCorners(img, (col, row), corners, ret)
+        else:
+            print(f"Chessboard corners not found in {filename}.")
         # elif show_corners:
         #     print(f"No corners detected in {filename}. Showing raw image.")
 
         if show_corners:
-            cv2.imshow('Image with Corners', img)
-            key = cv2.waitKey(0)
-            if key == 27:  # Press 'Esc' to exit early
-                break
+            cv2.putText(img, f"Image: {filename}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+            corner_dir = os.path.join(images_path, 'detected_corners')
+            if not os.path.exists(corner_dir):
+                os.makedirs(corner_dir)
+            cv2.imwrite(os.path.join(corner_dir, filename), img)
+            # cv2.imshow('Image with Corners', img)
+            # key = cv2.waitKey(0)
+            # if key == 27:  # Press 'Esc' to exit early
+                # break
 
     cv2.destroyAllWindows()
 
@@ -89,11 +100,28 @@ def calibrate_camera_from_images(images_path, square_size, col, row, show_corner
 
     if "dslr" not in images_path.lower() and "kinect" not in images_path.lower() and "d405" not in images_path.lower():
         flags = (cv2.CALIB_FIX_K1 | cv2.CALIB_FIX_K2 | cv2.CALIB_FIX_K3 | cv2.CALIB_ZERO_TANGENT_DIST)
-        ret, mtx, _, _, _, = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None, flags=flags)
+        ret, mtx, _, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None, flags=flags)
         dist = np.zeros((1, 5))
     else:
-        ret, mtx, dist, _, _ = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
     print(f"Camera calibrated with reprojection error (RMSE): {ret:.2f} [pix]")
+
+     # --- Calculate Mean and Per-Image Reprojection Error ---
+    total_error = 0
+    total_points = 0
+
+    print("\nPer-image reprojection errors:")
+    for i in range(len(objpoints)):
+        imgpoints2, _ = cv2.projectPoints(objpoints[i], rvecs[i], tvecs[i], mtx, dist)
+        error = cv2.norm(imgpoints[i], imgpoints2, cv2.NORM_L2)
+        mean_error_i = error / len(imgpoints2)
+        print(f"  [{i:03}] {files[i]}: {mean_error_i:.4f} px")
+        total_error += error
+        total_points += len(imgpoints2)
+
+    mean_error = total_error / total_points
+    print(f"\nMean reprojection error: {mean_error:.2f} [pix]")
+
 
     return ret, mtx, dist
 

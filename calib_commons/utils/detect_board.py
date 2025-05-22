@@ -85,7 +85,7 @@ def detect_chessboards(images_parent_folder: str,
             k = int(filename.split('.')[0])
 
             file_path = os.path.join(image_folder, filename)
-            # print(filename)
+            print(filename)
 
             img = cv.imread(file_path)
             gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
@@ -131,6 +131,8 @@ def detect_chessboards(images_parent_folder: str,
 
                 # correspondences[cam][k] = ObservationCheckerboard(_2dpoints)
                 correspondences[cam][k] = _2dpoints
+            else:
+                print(f"Chessboard not detected in {filename}")
 
     return correspondences
 
